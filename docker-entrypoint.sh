@@ -1,10 +1,6 @@
 #!/bin/bash
 set -e
 
-# Echo environment to a file
-printenv > /mysql-vars.sh
-chmod a+x /mysql-vars.sh
-
 # if command starts with an option, prepend mysqld
 if [ "${1:0:1}" = '-' ]; then
 	set -- mysqld "$@"
@@ -25,10 +21,10 @@ if [ "$1" = 'mysqld' ]; then
 		chown -R mysql:mysql "$DATADIR"
 
 		echo 'Running mysql_install_db'
-		mysql_install_db --user=mysql --datadir="$DATADIR" --rpm --keep-my-cnf
+		mysql_install_db --user=mysql --datadir="$DATADIR" --rpm --basedir=/usr/local/mysql
 		echo 'Finished mysql_install_db'
 
-		mysqld --user=mysql --datadir="$DATADIR" --skip-networking &
+		mysqld --user=mysql --datadir="$DATADIR" --skip-networking --basedir=/usr/local/mysql &
 		pid="$!"
 
 		mysql=( mysql --protocol=socket -uroot )
@@ -45,8 +41,7 @@ if [ "$1" = 'mysqld' ]; then
 			exit 1
 		fi
 
-		# sed is for https://bugs.mysql.com/bug.php?id=20545
-		mysql_tzinfo_to_sql /usr/share/zoneinfo | sed 's/Local time zone must be set--see zic manual page/FCTY/' | "${mysql[@]}" mysql
+		mysql_tzinfo_to_sql /usr/share/zoneinfo | "${mysql[@]}" mysql
 
 		"${mysql[@]}" <<-EOSQL
 			-- What's done in this file shouldn't be replicated
