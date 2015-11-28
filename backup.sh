@@ -1,4 +1,7 @@
 #!/bin/bash
-source /mysql-vars.sh
-sleep $[ ( $RANDOM % 14400 )  + 1 ]s
-mysqldump -uroot -p$MYSQL_ROOT_PASSWORD --all-databases > /var/lib/mysql/mysql-backup.sql
+source /workdir/environment.sh
+while [ 1 ]
+do
+    sleep $[ ( $RANDOM % 24 )  + 1 ]h
+    mysqldump -uroot -p$MYSQL_ROOT_PASSWORD --all-databases > /volume/mysql_data/mysql-backup.sql
+done

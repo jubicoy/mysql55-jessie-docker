@@ -1,5 +1,15 @@
 #!/bin/bash
+
+# Set env and options
 set -e
+export USER_ID=$(id -u)
+export GROUP_ID=$(id -g)
+envsubst < /workdir/passwd.template > /tmp/passwd
+export LD_PRELOAD=libnss_wrapper.so
+export NSS_WRAPPER_PASSWD=/tmp/passwd
+export NSS_WRAPPER_GROUP=/etc/group
+
+printenv > /workdir/environment.sh
 
 # if command starts with an option, prepend mysqld
 if [ "${1:0:1}" = '-' ]; then
@@ -8,7 +18,8 @@ fi
 
 if [ "$1" = 'mysqld' ]; then
 	# Get config
-	DATADIR="$("$@" --verbose --help 2>/dev/null | awk '$1 == "datadir" { print $2; exit }')"
+	#DATADIR="$("$@" --verbose --help 2>/dev/null | awk '$1 == "datadir" { print $2; exit }')"
+	DATADIR="/volume/mysql_data"
 
 	if [ ! -d "$DATADIR/mysql" ]; then
 		if [ -z "$MYSQL_ROOT_PASSWORD" -a -z "$MYSQL_ALLOW_EMPTY_PASSWORD" ]; then
@@ -17,8 +28,8 @@ if [ "$1" = 'mysqld' ]; then
 			exit 1
 		fi
 
-		mkdir -p "$DATADIR"
-		chown -R mysql:mysql "$DATADIR"
+		#mkdir -p "$DATADIR"
+		#chown -R mysql:mysql "$DATADIR"
 
 		echo 'Running mysql_install_db'
 		mysql_install_db --user=mysql --datadir="$DATADIR" --rpm --basedir=/usr/local/mysql
@@ -93,7 +104,7 @@ if [ "$1" = 'mysqld' ]; then
 		echo
 	fi
 
-	chown -R mysql:mysql "$DATADIR"
+	#chown -R mysql:mysql "$DATADIR"
 fi
 
 exec "/usr/bin/supervisord"

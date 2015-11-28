@@ -20,6 +20,9 @@ RUN gpg --keyserver ha.pool.sks-keyservers.net --recv-keys A4A9406876FCBD3C45677
 
 ENV MYSQL_MAJOR 5.5
 ENV MYSQL_VERSION 5.5.45
+ENV WORKDIR /workdir
+
+RUN mkdir /workdir && chmod -R 777 /workdir
 
 # note: we're pulling the *.asc file from mysql.he.net instead of dev.mysql.com because the official mirror 404s that file for whatever reason - maybe it's at a different path?
 RUN apt-get update && apt-get install -y curl --no-install-recommends && rm -rf /var/lib/apt/lists/* \
@@ -50,25 +53,35 @@ RUN mkdir -p /etc/mysql/conf.d \
 		echo '!includedir /etc/mysql/conf.d/'; \
 	} > /etc/mysql/my.cnf
 
-# install cron & supervisord
-RUN apt-get update && apt-get install -y supervisor cron
+# install supervisord
+RUN apt-get update && apt-get install -y supervisor gettext
+
+# install nss-wrapper from unstable
+ADD ./apt/unstable.pref /etc/apt/preferences.d/unstable.pref
+ADD ./apt/unstable.list /etc/apt/sources.list.d/unstable.list
+RUN apt-get update && apt-get install -y -t unstable libnss-wrapper
 
 # change the data directory
-RUN sed -i '/^datadir*/ s|/var/lib/mysql|/var/lib/mysql/mysql|' /etc/mysql/my.cnf
+RUN sed -i '/^datadir*/ s|/var/lib/mysql|/volume/mysql_data|' /etc/mysql/my.cnf
 
 # add backups
-ADD mysql-crontab /etc/cron.d/mysql-crontab
-RUN chmod 0644 /etc/cron.d/mysql-crontab
-RUN touch /var/log/cron.log
-COPY backup.sh /backup.sh
+COPY backup.sh ${WORKDIR}/backup.sh
 
 # copy supervisord config
 COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 RUN mkdir -p /var/log/supervisor
 
 VOLUME /var/lib/mysql
+WORKDIR /workdir
 
-COPY docker-entrypoint.sh /entrypoint.sh
+ADD passwd.template ${WORKDIR}/passwd.template
+ADD docker-entrypoint.sh /entrypoint.sh
+
+RUN mkdir -p /volume/mysql_data && chmod -R 777 /volume/mysql_data && chown -R 27:27 /volume/mysql_data
+RUN mkdir ${WORKDIR}/sv-child-logs/ && chmod -R 777 ${WORKDIR}
+
+USER 27
+
 ENTRYPOINT ["/entrypoint.sh"]
 
 EXPOSE 3306
