@@ -1,5 +1,4 @@
 #!/bin/bash
-
 # Set env and options
 set -e
 export USER_ID=$(id -u)
@@ -11,6 +10,7 @@ export NSS_WRAPPER_GROUP=/etc/group
 
 printenv > /workdir/environment.sh
 
+
 # if command starts with an option, prepend mysqld
 if [ "${1:0:1}" = '-' ]; then
 	set -- mysqld "$@"
@@ -20,6 +20,8 @@ if [ "$1" = 'mysqld' ]; then
 	# Get config
 	#DATADIR="$("$@" --verbose --help 2>/dev/null | awk '$1 == "datadir" { print $2; exit }')"
 	DATADIR="/volume/mysql_data"
+	TEMPDIR="/workdir/mysql_data"
+	mkdir -p $TEMPDIR
 
 	if [ ! -d "$DATADIR/mysql" ]; then
 		if [ -z "$MYSQL_ROOT_PASSWORD" -a -z "$MYSQL_ALLOW_EMPTY_PASSWORD" ]; then
@@ -28,14 +30,10 @@ if [ "$1" = 'mysqld' ]; then
 			exit 1
 		fi
 
-		#mkdir -p "$DATADIR"
-		#chown -R mysql:mysql "$DATADIR"
-
-		echo 'Running mysql_install_db'
-		mysql_install_db --user=mysql --datadir="$DATADIR" --rpm --basedir=/usr/local/mysql
+		mysql_install_db --datadir="$TEMPDIR" --rpm --basedir=/usr/local/mysql
 		echo 'Finished mysql_install_db'
 
-		mysqld --user=mysql --datadir="$DATADIR" --skip-networking --basedir=/usr/local/mysql &
+		mysqld --datadir="$TEMPDIR" --skip-networking --basedir=/usr/local/mysql &
 		pid="$!"
 
 		mysql=( mysql --protocol=socket -uroot )
@@ -99,12 +97,14 @@ if [ "$1" = 'mysqld' ]; then
 			exit 1
 		fi
 
+		echo 'Moving $TEMPDIR to data directory: $DATADIR'
+		mv $TEMPDIR $DATADIR
+
 		echo
 		echo 'MySQL init process done. Ready for start up.'
 		echo
 	fi
 
-	#chown -R mysql:mysql "$DATADIR"
 fi
 
 exec "/usr/bin/supervisord"

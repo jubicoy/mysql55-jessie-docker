@@ -1,8 +1,5 @@
 FROM debian:jessie
 
-# add our user and group first to make sure their IDs get assigned consistently, regardless of whatever dependencies get added
-RUN groupadd -r mysql && useradd -r -g mysql mysql
-
 RUN mkdir /docker-entrypoint-initdb.d
 
 # FATAL ERROR: please install the following Perl modules before executing /usr/local/mysql/scripts/mysql_install_db:
@@ -77,7 +74,7 @@ WORKDIR /workdir
 ADD passwd.template ${WORKDIR}/passwd.template
 ADD docker-entrypoint.sh /entrypoint.sh
 
-RUN mkdir -p /volume/mysql_data && chmod -R 777 /volume/mysql_data && chown -R 27:27 /volume/mysql_data
+RUN mkdir -p /volume && chmod -R 777 /volume
 RUN mkdir ${WORKDIR}/sv-child-logs/ && chmod -R 777 ${WORKDIR}
 
 USER 27
