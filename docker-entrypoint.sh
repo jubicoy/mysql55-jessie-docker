@@ -10,6 +10,9 @@ export NSS_WRAPPER_GROUP=/etc/group
 
 printenv > /workdir/environment.sh
 
+if [ ! -d /volume/mysql_backups ]; then
+	mkdir /volume/mysql_backups
+fi
 
 # if command starts with an option, prepend mysqld
 if [ "${1:0:1}" = '-' ]; then
@@ -80,6 +83,11 @@ if [ "$1" = 'mysqld' ]; then
 			fi
 
 			echo 'FLUSH PRIVILEGES ;' | "${mysql[@]}"
+		fi
+
+
+		if [ -z "$DATABASE_BACKUPS_MAX" ]; then
+			echo "DATABASE_BACKUPS_MAX not set. Using default of 7."
 		fi
 
 		echo
