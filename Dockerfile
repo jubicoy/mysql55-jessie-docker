@@ -40,13 +40,14 @@ ENV PATH $PATH:/usr/local/mysql/bin:/usr/local/mysql/scripts
 # this is only for 5.5 since it doesn't have an APT repo, and will go away when 5.5 does
 RUN mkdir -p /etc/mysql/conf.d \
 	&& { \
-		echo '[mysqld]'; \
-		echo 'skip-host-cache'; \
-		echo 'skip-name-resolve'; \
-		echo 'user = mysql'; \
-		echo 'datadir = /var/lib/mysql'; \
+    echo '[mysqld]'; \
+    echo 'skip-host-cache'; \
+    echo 'skip-name-resolve'; \
+    echo 'user = mysql'; \
+    echo 'datadir = /var/lib/mysql'; \
     echo 'max_allowed_packet = 32M'; \
-		echo '!includedir /etc/mysql/conf.d/'; \
+    echo 'innodb_use_native_aio = 0'; \
+    echo '!includedir /etc/mysql/conf.d/'; \
 	} > /etc/mysql/my.cnf
 
 # install supervisord
