@@ -16,14 +16,14 @@ RUN apt-get update && apt-get install -y libaio1 && rm -rf /var/lib/apt/lists/*
 RUN gpg --keyserver ha.pool.sks-keyservers.net --recv-keys A4A9406876FCBD3C456770C88C718D3B5072E1F5
 
 ENV MYSQL_MAJOR 5.5
-ENV MYSQL_VERSION 5.5.45
+ENV MYSQL_VERSION 5.5.61
 ENV WORKDIR /workdir
 
 RUN mkdir /workdir && chmod -R 777 /workdir
 
 # note: we're pulling the *.asc file from mysql.he.net instead of dev.mysql.com because the official mirror 404s that file for whatever reason - maybe it's at a different path?
 RUN apt-get update && apt-get install -y curl --no-install-recommends && rm -rf /var/lib/apt/lists/* \
-	&& curl -SL "http://dev.mysql.com/get/Downloads/MySQL-$MYSQL_MAJOR/mysql-$MYSQL_VERSION-linux2.6-x86_64.tar.gz" -o mysql.tar.gz \
+	&& curl -SLk "https://dev.mysql.com/get/Downloads/MySQL-$MYSQL_MAJOR/mysql-$MYSQL_VERSION-linux-glibc2.12-x86_64.tar.gz" -o mysql.tar.gz \
 	&& apt-get purge -y --auto-remove curl \
 	&& mkdir /usr/local/mysql \
 	&& tar -xzf mysql.tar.gz -C /usr/local/mysql --strip-components=1 \
